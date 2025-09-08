@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Asistencias de Hoy - Sistema de Asistencia Yoga{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2><i class="fas fa-chart-bar"></i> Asistencias de Hoy</h2>
+    <h4 class="text-muted">{{ fecha_hoy }}</h4>
+</div>
+
+{% if asistencias %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th><i class="fas fa-user"></i> Nombre</th>
+                <th><i class="fas fa-user"></i> Apellido</th>
+                <th><i class="fas fa-info-circle"></i> Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asistencia in asistencias %}
+            <tr>
+                <td>{{ asistencia.nombre }}</td>
+                <td>{{ asistencia.apellido }}</td>
+                <td>
+                    {% if asistencia.estado == 'Presente' %}
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle"></i> Presente
+                        </span>
+                    {% elif asistencia.estado == 'Ausente' %}
+                        <span class="badge bg-danger fs-6">
+                            <i class="fas fa-times-circle"></i> Ausente
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6">
+                            <i class="fas fa-question-circle"></i> Sin marcar
+                        </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 id="total-presentes">
+                    {% set presentes = asistencias|selectattr('estado', 'equalto', 'Presente')|list|length %}
+                    {{ presentes }}
+                </h3>
+                <p class="mb-0">Presentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h3 id="total-ausentes">
+                    {% set ausentes = asistencias|selectattr('estado', 'equalto', 'Ausente')|list|length %}
+                    {{ ausentes }}
+                </h3>
+                <p class="mb-0">Ausentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <h3 id="total-sin-marcar">
+                    {% set sin_marcar = asistencias|selectattr('estado', 'equalto', 'Sin marcar')|list|length %}
+                    {{ sin_marcar }}
+                </h3>
+                <p class="mb-0">Sin marcar</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 id="total-alumnos">{{ asistencias|length }}</h3>
+                <p class="mb-0">Total Alumnos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Porcentaje de asistencia -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title text-center">Porcentaje de Asistencia</h5>
+                {% set total_presentes = asistencias|selectattr('estado', 'equalto', 'Presente')|list|length %}
+                {% set total_alumnos = asistencias|length %}
+                {% if total_alumnos > 0 %}
+                    {% set porcentaje = (total_presentes / total_alumnos * 100)|round(1) %}
+                {% else %}
+                    {% set porcentaje = 0 %}
+                {% endif %}
+                
+                <div class="progress mb-3" style="height: 30px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ porcentaje }}%" 
+                         aria-valuenow="{{ porcentaje }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ porcentaje }}%
+                    </div>
+                </div>
+                <p class="text-center text-muted">
+                    {{ total_presentes }} de {{ total_alumnos }} alumnos presentes
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-5x text-muted mb-4"></i>
+    <h3 class="text-muted">No hay alumnos registrados</h3>
+    <p class="text-muted">Primero registra algunos alumnos</p>
+    <a href="{{ url_for('registrar_alumno') }}" class="btn btn-yoga btn-primary btn-lg">
+        <i class="fas fa-user-plus"></i> Registrar Alumnos
+    </a>
+</div>
+{% endif %}
+
+<div class="mt-4 text-center">
+    <a href="{{ url_for('marcar_asistencia') }}" class="btn btn-info me-2">
+        <i class="fas fa-edit"></i> Marcar Asistencia
+    </a>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Alumnos - Sistema de Asistencia Yoga{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users"></i> Lista de Alumnos</h2>
+    <a href="{{ url_for('registrar_alumno') }}" class="btn btn-yoga btn-primary">
+        <i class="fas fa-user-plus"></i> Nuevo Alumno
+    </a>
+</div>
+
+{% if alumnos %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th><i class="fas fa-user"></i> Nombre</th>
+                <th><i class="fas fa-user"></i> Apellido</th>
+                <th><i class="fas fa-phone"></i> Teléfono</th>
+                <th><i class="fas fa-calendar"></i> Fecha Registro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alumno in alumnos %}
+            <tr>
+                <td>{{ alumno.nombre }}</td>
+                <td>{{ alumno.apellido }}</td>
+                <td>
+                    {% if alumno.telefono %}
+                        <a href="tel:{{ alumno.telefono }}" class="text-decoration-none">
+                            <i class="fas fa-phone"></i> {{ alumno.telefono }}
+                        </a>
+                    {% else %}
+                        <span class="text-muted">Sin teléfono</span>
+                    {% endif %}
+                </td>
+                <td>{{ alumno.fecha_registro }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fas fa-users text-primary"></i>
+                    Total de Alumnos
+                </h5>
+                <h2 class="text-primary">{{ alumnos|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="fas fa-calendar text-success"></i>
+                    Registrados Hoy
+                </h5>
+                <h2 class="text-success">{{ registrados_hoy }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-5x text-muted mb-4"></i>
+    <h3 class="text-muted">No hay alumnos registrados</h3>
+    <p class="text-muted">Comienza agregando tu primer alumno</p>
+    <a href="{{ url_for('registrar_alumno') }}" class="btn btn-yoga btn-primary btn-lg">
+        <i class="fas fa-user-plus"></i> Registrar Primer Alumno
+    </a>
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+    </a>
+</div>
+{% endblock %}

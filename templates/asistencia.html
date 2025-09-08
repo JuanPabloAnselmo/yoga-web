@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Marcar Asistencia - Sistema de Asistencia Yoga{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2><i class="fas fa-check-circle"></i> Marcar Asistencia</h2>
+    <h4 class="text-muted">{{ fecha_hoy }}</h4>
+    <p class="text-muted">Toca en un nombre para cambiar entre presente/ausente</p>
+</div>
+
+{% if alumnos %}
+<div class="row">
+    {% for alumno in alumnos %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card attendance-card" data-alumno-id="{{ alumno.id }}">
+            <div class="card-body text-center attendance-toggle 
+                {% if alumno.presente == 1 %}presente
+                {% elif alumno.presente == 0 %}ausente
+                {% else %}sin-marcar{% endif %}">
+                <h5 class="card-title">{{ alumno.nombre }} {{ alumno.apellido }}</h5>
+                <div class="status-icon">
+                    {% if alumno.presente == 1 %}
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                        <p class="mb-0 status-presente">Presente</p>
+                    {% elif alumno.presente == 0 %}
+                        <i class="fas fa-times-circle fa-2x text-danger"></i>
+                        <p class="mb-0 status-ausente">Ausente</p>
+                    {% else %}
+                        <i class="fas fa-question-circle fa-2x text-muted"></i>
+                        <p class="mb-0 status-sin-marcar">Sin marcar</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title text-center">Resumen del Día</h5>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-success" id="contador-presentes">0</h3>
+                        <p class="text-muted">Presentes</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-danger" id="contador-ausentes">0</h3>
+                        <p class="text-muted">Ausentes</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-muted" id="contador-sin-marcar">0</h3>
+                        <p class="text-muted">Sin marcar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-5x text-muted mb-4"></i>
+    <h3 class="text-muted">No hay alumnos registrados</h3>
+    <p class="text-muted">Primero registra algunos alumnos</p>
+    <a href="{{ url_for('registrar_alumno') }}" class="btn btn-yoga btn-primary btn-lg">
+        <i class="fas fa-user-plus"></i> Registrar Alumnos
+    </a>
+</div>
+{% endif %}
+
+<div class="mt-4 text-center">
+    <a href="{{ url_for('ver_asistencias_hoy') }}" class="btn btn-info me-2">
+        <i class="fas fa-eye"></i> Ver Resumen
+    </a>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Actualizar contadores al cargar
+    updateCounters();
+    
+    // Manejar clic en tarjetas de asistencia
+    $('.attendance-toggle').on('click', function() {
+        const card = $(this).closest('.attendance-card');
+        const alumnoId = card.data('alumno-id');
+        const currentStatus = $(this).hasClass('presente') ? 1 : 
+                             $(this).hasClass('ausente') ? 0 : null;
+        
+        // Determinar nuevo estado
+        let newStatus;
+        if (currentStatus === null || currentStatus === 0) {
+            newStatus = 1; // Presente
+        } else {
+            newStatus = 0; // Ausente
+        }
+        
+        // Enviar al servidor
+        $.ajax({
+            url: '{{ url_for("toggle_asistencia") }}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                alumno_id: alumnoId,
+                presente: newStatus
+            }),
+            success: function(response) {
+                if (response.success) {
+                    updateAttendanceCard(card, newStatus);
+                    updateCounters();
+                } else {
+                    showAlert('error', 'Error al actualizar asistencia');
+                }
+            },
+            error: function() {
+                showAlert('error', 'Error de conexión');
+            }
+        });
+    });
+    
+    function updateAttendanceCard(card, status) {
+        const cardBody = card.find('.attendance-toggle');
+        const statusIcon = cardBody.find('.status-icon');
+        
+        // Remover clases anteriores
+        cardBody.removeClass('presente ausente sin-marcar');
+        
+        if (status === 1) {
+            cardBody.addClass('presente');
+            statusIcon.html(`
+                <i class="fas fa-check-circle fa-2x text-success"></i>
+                <p class="mb-0 status-presente">Presente</p>
+            `);
+        } else {
+            cardBody.addClass('ausente');
+            statusIcon.html(`
+                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                <p class="mb-0 status-ausente">Ausente</p>
+            `);
+        }
+    }
+    
+    function updateCounters() {
+        const presentes = $('.attendance-toggle.presente').length;
+        const ausentes = $('.attendance-toggle.ausente').length;
+        const sinMarcar = $('.attendance-toggle.sin-marcar').length;
+        
+        $('#contador-presentes').text(presentes);
+        $('#contador-ausentes').text(ausentes);
+        $('#contador-sin-marcar').text(sinMarcar);
+    }
+    
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+        
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="${icon}"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        $('.container .main-container').prepend(alertHtml);
+        
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Alumno - Sistema de Asistencia Yoga{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h4><i class="fas fa-user-plus"></i> Registrar Nuevo Alumno</h4>
+            </div>
+            <div class="card-body">
+                <form id="registroForm">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">
+                            <i class="fas fa-user"></i> Nombre *
+                        </label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="apellido" class="form-label">
+                            <i class="fas fa-user"></i> Apellido *
+                        </label>
+                        <input type="text" class="form-control" id="apellido" name="apellido" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">
+                            <i class="fas fa-phone"></i> Teléfono
+                        </label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-yoga btn-primary">
+                            <i class="fas fa-save"></i> Guardar Alumno
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalMessage">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmar">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#registroForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            nombre: $('#nombre').val().trim(),
+            apellido: $('#apellido').val().trim(),
+            telefono: $('#telefono').val().trim()
+        };
+        
+        if (!formData.nombre || !formData.apellido) {
+            showAlert('error', 'Nombre y apellido son obligatorios');
+            return;
+        }
+        
+        $.ajax({
+            url: '{{ url_for("registrar_alumno") }}',
+            method: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    showAlert('success', response.message);
+                    $('#registroForm')[0].reset();
+                } else {
+                    showAlert('error', response.message);
+                }
+            },
+            error: function() {
+                showAlert('error', 'Error de conexión. Intenta nuevamente.');
+            }
+        });
+    });
+    
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+        
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="${icon}"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        $('.card-body').prepend(alertHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}
