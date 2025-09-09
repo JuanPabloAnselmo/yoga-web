@@ -55,17 +55,21 @@ def index():
 @app.route('/alumnos')
 def ver_alumnos():
     """Ver lista de alumnos"""
-    conn = get_db_connection()
-    alumnos = conn.execute('''
-        SELECT * FROM alumnos ORDER BY apellido, nombre
-    ''').fetchall()
-    
-    # Contar alumnos registrados hoy
-    hoy = date.today().strftime('%Y-%m-%d')
-    registrados_hoy = len([alumno for alumno in alumnos if alumno['fecha_registro'] == hoy])
-    
-    conn.close()
-    return render_template('alumnos.html', alumnos=alumnos, registrados_hoy=registrados_hoy)
+    try:
+        conn = get_db_connection()
+        alumnos = conn.execute('''
+            SELECT * FROM alumnos ORDER BY apellido, nombre
+        ''').fetchall()
+        
+        # Contar alumnos registrados hoy
+        hoy = date.today().strftime('%Y-%m-%d')
+        registrados_hoy = len([alumno for alumno in alumnos if alumno['fecha_registro'] == hoy])
+        
+        conn.close()
+        return render_template('alumnos.html', alumnos=alumnos, registrados_hoy=registrados_hoy)
+    except Exception as e:
+        print(f"Error en ver_alumnos: {str(e)}")
+        return f"Error: {str(e)}", 500
 
 @app.route('/registrar_alumno', methods=['GET', 'POST'])
 def registrar_alumno():
