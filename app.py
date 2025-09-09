@@ -14,17 +14,20 @@ from urllib.parse import urlparse
 app = Flask(__name__)
 
 def get_db_connection():
-    """Conectar a la base de datos PostgreSQL"""
+    """Conectar a la base de datos PostgreSQL o SQLite"""
     try:
         # Obtener URL de la base de datos desde Railway
         database_url = os.environ.get('DATABASE_URL')
         
         if not database_url:
+            print("No DATABASE_URL found, using SQLite fallback")
             # Para desarrollo local, usar SQLite como fallback
             import sqlite3
             conn = sqlite3.connect('asistencia_yoga.db')
             conn.row_factory = sqlite3.Row
             return conn
+        
+        print(f"Connecting to PostgreSQL: {database_url[:20]}...")
         
         # Parsear la URL de PostgreSQL
         result = urlparse(database_url)
@@ -39,10 +42,12 @@ def get_db_connection():
         
         # Configurar para que las consultas devuelvan diccionarios
         conn.autocommit = True
+        print("Successfully connected to PostgreSQL")
         return conn
         
     except Exception as e:
-        print(f"Error conectando a la base de datos: {str(e)}")
+        print(f"Error conectando a PostgreSQL: {str(e)}")
+        print("Falling back to SQLite")
         # Fallback a SQLite para desarrollo local
         import sqlite3
         conn = sqlite3.connect('asistencia_yoga.db')
